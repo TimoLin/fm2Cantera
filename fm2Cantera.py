@@ -27,9 +27,10 @@ def readFM(fname, fm):
     line = f.readline()
     while ('chi_st' not in line):
         line = f.readline()
-   
+    
     chi_st = float(line.split()[2])
     fm.readChi(chi_st)
+    
 
     while ('numOfSpecies' not in line):
         line = f.readline()
@@ -102,24 +103,54 @@ def writeCSV(fname,fm):
     f.close()
     
 def main():
+    
+    help = " Usage:\n" \
+          +"   python3 fm2Cantera.py -dir <FM-Solution-dir>"
+
     if_list = []
     of_list = []
-
+    
     if '-dir' in sys.argv:
         f_dir = sys.argv[sys.argv.index('-dir')+1]
         f_list = os.listdir(f_dir)
+    else:
+        print(help)
+        sys.exit()
 
     os.chdir(f_dir)
     
     fms = []
 
     for fname in f_list:
-        fms.append(flamelet())
-        readFM(fname, fms[-1])
+        if 'chi' in fname:
+            fms.append(flamelet())
+            readFM(fname, fms[-1])
     os.chdir('../')
+    
+    outputDir = 'tables'
+
+    if os.path.exists(outputDir):
+        if os.listdir(outputDir):
+            print(" Output Folder '"+ outputDir+"' is not empty!\n It's better to clean it. \n Abort!")
+            sys.exit()
+    else:
+        os.makedirs(outputDir)
+    
     for n in range(len(fms)):
-        fname = 'Table_'+str(fms[n].chi_st)+'.csv'
+        fname = outputDir + '/'+'Table_'+str(fms[n].chi_st)+'.csv'
         writeCSV(fname, fms[n])
+
+    # get chi order 
+    chi = []
+    for n in range(len(fms)):
+        chi.append(fms[n].chi_st)
+    chi.sort()
+    f= open('chi_parm','w')
+    for n in range(len(chi)):
+        f.write(str(chi[n])+'\n')
+    f.close()
+
+
 
 if __name__ == '__main__':
     main()
